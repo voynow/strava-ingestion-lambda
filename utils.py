@@ -37,7 +37,6 @@ def get_code_from_strava():
             if "code" in param:
                     code = param.split("=")[1]
     driver.quit()
-
     return code
 
 
