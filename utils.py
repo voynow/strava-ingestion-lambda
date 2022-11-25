@@ -27,9 +27,6 @@ def get_code_from_strava():
     """
     driver = create_driver()
     driver.get(configs.get_oauth_code_param())
-    
-    # WebDriverWait(driver, 10).until(
-    #     EC.presence_of_element_located((By.CLASS_NAME, 'btn-accept-cookie-banner'))).click()
 
     driver.find_element(By.CSS_SELECTOR, f'input#email').send_keys(configs.email)
     driver.find_element(By.CSS_SELECTOR, f'input#password').send_keys(configs.password + Keys.ENTER)
