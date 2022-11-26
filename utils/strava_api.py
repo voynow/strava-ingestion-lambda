@@ -71,6 +71,6 @@ def activities_driver():
 
     if resp.status_code == 200:
         auth_code = resp.json()['access_token']
-        return s3.get_activities(auth_code)
+        return get_activities(auth_code)
     else:
         raise Exception(f"Oauth request returning invalid status code: {resp.status_code}")
