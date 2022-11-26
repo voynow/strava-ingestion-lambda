@@ -1,24 +1,12 @@
 
-import boto3
-import configs
-import json
 import requests
-import time
 
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException      
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
 from headless_chrome import create_driver
 
-
-strfrmt = "%m/%d/%Y, %H:%M:%S"
-bucket_name = "strava-raw"
-s3 = boto3.resource('s3')
-
+import utils.s3 as s3
+import utils.configs as configs
 
 def get_code_from_strava():
     """
@@ -76,35 +64,13 @@ def get_activities(access_token):
     ).json()
 
 
-def strava_raw_ls():
-    """
-    return list of all files within the strava-raw s3 bucket
-    """
-    objs = s3.Bucket(bucket_name).objects.all()
-    
-    return [obj.key for obj in objs]
-    
-    
-def write_to_s3(activity, filename):
-    """
-    Dump json to strava-raw s3 bucket
-    """
-    object = s3.Object(bucket_name, filename)
-    object.put(Body=json.dumps(activity))
+def activities_driver():
 
+    oauth_url = s3.create_oauth_url()
+    resp = requests.post(oauth_url)
 
-def write_activities(activities):
-    """
-    write activities to strava-raw s3 bucket
-    """
-    existing_activities = strava_raw_ls()
-
-    for activity in activities:
-
-        # create filename from activity id
-        filename = str(activity['id']) + ".json"
-    
-        # save json if file does not exist
-        if filename not in existing_activities:
-            activity['api_call_ts'] = time.strftime(strfrmt)
-            # write_to_s3(activity, filename)
+    if resp.status_code == 200:
+        auth_code = resp.json()['access_token']
+        return s3.get_activities(auth_code)
+    else:
+        raise Exception(f"Oauth request returning invalid status code: {resp.status_code}")
