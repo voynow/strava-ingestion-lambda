@@ -1,13 +1,12 @@
 
-import configs
 import requests
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from headless_chrome import create_driver
 
-import s3_utils
-
+import utils.s3 as s3
+import utils.configs as configs
 
 def get_code_from_strava():
     """
@@ -67,11 +66,11 @@ def get_activities(access_token):
 
 def activities_driver():
 
-    oauth_url = s3_utils.create_oauth_url()
+    oauth_url = s3.create_oauth_url()
     resp = requests.post(oauth_url)
 
     if resp.status_code == 200:
         auth_code = resp.json()['access_token']
-        return s3_utils.get_activities(auth_code)
+        return s3.get_activities(auth_code)
     else:
         raise Exception(f"Oauth request returning invalid status code: {resp.status_code}")

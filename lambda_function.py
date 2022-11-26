@@ -1,11 +1,11 @@
 
-import s3_utils
-import strava_api_utils
+import utils.s3 as s3
+import utils.strava_api as strava_api
 
 
 def lambda_handler(event, context):
 
-    activities = strava_api_utils.activities_driver()
+    activities = strava_api.activities_driver()
     # s3_utils.write_activities(activities)
 
     return 1

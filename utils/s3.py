@@ -3,7 +3,6 @@ import boto3
 import json
 import time
 
-
 strfrmt = "%m/%d/%Y, %H:%M:%S"
 bucket_name = "strava-raw"
 s3 = boto3.resource('s3')
