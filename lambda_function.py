@@ -4,6 +4,8 @@ import requests
 
 
 def lambda_handler(event, context):
+    print("event:", event)
+    print("context:", context)
     
     oauth_url = utils.create_oauth_url()
     resp = requests.post(oauth_url)

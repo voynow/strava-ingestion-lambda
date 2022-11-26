@@ -107,4 +107,4 @@ def write_activities(activities):
         # save json if file does not exist
         if filename not in existing_activities:
             activity['api_call_ts'] = time.strftime(strfrmt)
-            write_to_s3(activity, filename)
+            # write_to_s3(activity, filename)
