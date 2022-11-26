@@ -66,7 +66,7 @@ def get_activities(access_token):
 
 def activities_driver():
 
-    oauth_url = s3.create_oauth_url()
+    oauth_url = create_oauth_url()
     resp = requests.post(oauth_url)
 
     if resp.status_code == 200:
