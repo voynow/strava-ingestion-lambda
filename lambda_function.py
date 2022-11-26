@@ -6,6 +6,6 @@ import utils.strava_api as strava_api
 def lambda_handler(event, context):
 
     activities = strava_api.activities_driver()
-    # s3_utils.write_activities(activities)
+    s3.write_activities(activities)
 
     return 1
