@@ -1,8 +1,8 @@
 
-import secrets_manager
+import secrets_manager_utils
 
 # get secrets from secrets manager
-secrets = secrets_manager.get_secrets()
+secrets = secrets_manager_utils.get_secrets()
 
 # unpack secrets
 client_id = secrets['client_id']
