@@ -3,17 +3,29 @@ import requests
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import WebDriverException
 from headless_chrome import create_driver
 
 import utils.s3 as s3
 import utils.configs as configs
+
+def create_driver_helper():
+    """
+    Handles Chrome failed to start error
+    """
+    try:
+        driver = create_driver()
+    except WebDriverException:
+        create_driver_helper()
+    return driver
+        
 
 def get_code_from_strava():
     """
     Selenium code to automate access to account authorization for API
     Storing code from URL in configs file, this code is required for oauth API call
     """
-    driver = create_driver()
+    driver = create_driver_helper()
     driver.get(configs.get_oauth_code_param())
 
     driver.find_element(By.CSS_SELECTOR, f'input#email').send_keys(configs.email)
