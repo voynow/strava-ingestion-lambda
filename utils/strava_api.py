@@ -13,6 +13,7 @@ def create_driver_helper():
     """
     Handles Chrome failed to start error
     """
+    driver = None
     while driver is None:
         try:
             driver = create_driver()
