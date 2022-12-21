@@ -6,7 +6,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import WebDriverException
 from headless_chrome import create_driver
 
-import utils.s3 as s3
 import utils.configs as configs
 
 def create_driver_helper():
