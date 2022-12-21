@@ -3,24 +3,40 @@ import boto3
 import json
 import time
 
-strfrmt = "%m/%d/%Y, %H:%M:%S"
+import utils.configs as configs
+
+
 bucket_name = "strava-raw"
 s3 = boto3.resource('s3')
 
 
-def write_activities(activities):
+def load_table(bucket, table):
+    """ Get table from s3
     """
-    write activities to strava-raw s3 bucket
+    obj = s3.Object(bucket, table)
+    return json.loads(obj.get()['Body'].read())
+
+
+def append_new_activities(new_activities, existing_activities):
+    """ Append new activities to activities table
     """
-    objs = s3.Bucket(bucket_name).objects.all()
-    existing_activities = [obj.key for obj in objs]
+    for activity in new_activities[::-1]:
+        key = str(activity['id'])
+        
+        if key not in existing_activities:
+            activity['api_call_ts'] = time.strftime(configs.strfrmt)
+            existing_activities[key] = activity
 
-    for activity in activities:
+    return existing_activities
 
-        # create filename from activity id
-        filename = str(activity['id']) + ".json"
-    
-        # save json if file does not exist
-        if filename not in existing_activities:
-            activity['api_call_ts'] = time.strftime(strfrmt)
-            s3.Object(bucket_name, filename).put(Body=json.dumps(activity))
+
+
+def write_activities(new_activities):
+    """ write activities to strava-raw s3 bucket
+    """
+    filename = "activities.json"
+    existing_activities = load_table(bucket_name, filename)
+    master_activities = append_new_activities(new_activities, existing_activities)
+    s3.Object(bucket_name, filename).put(Body=json.dumps(master_activities))
+
+

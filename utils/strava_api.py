@@ -1,13 +1,32 @@
 
+import utils.s3 as s3
+import utils.configs as configs
+
 import requests
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import WebDriverException
-from headless_chrome import create_driver
+# from headless_chrome import create_driver
+from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
 
-import utils.s3 as s3
-import utils.configs as configs
+
+options = Options()
+options.add_argument('--headless')
+
+
+def create_driver(link=None):
+    """
+    Create chrome driver, get link if available
+    """
+    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=options)
+    if link:
+        driver.get(link)
+
+    return driver
+
 
 def create_driver_helper():
     """
