@@ -89,3 +89,48 @@ def activities_driver():
         return get_activities(auth_code)
     else:
         raise Exception(f"Oauth request returning invalid status code: {resp.status_code}")
+
+
+def get_request(access_token, url_suffix):
+    """
+    Constructs get request to strava api
+    """
+    return requests.get(
+        f'https://www.strava.com/api/v3/{url_suffix}',
+        headers={'Authorization': f'Bearer {access_token}'},
+        params={'per_page': 200, 'page': 1}
+    ).json()
+
+
+def validate_resp(resp):
+    # extract data from nested list
+    if isinstance(resp, list):
+        if len(resp) == 1:
+            resp = resp[0]
+    # skip error response from API limit
+    if 'message' in resp:
+        if resp['message'] == configs.rate_exceeded_message:
+            return None
+    return resp
+
+
+def batch_get_request(table, ids, access_token):
+    """
+    construct list of get urls given table and activty ids
+    """
+    prefix = configs.activities_base_url
+    suffix = configs.activities_endpoints[table]
+
+    data = {}
+    for i, idx in enumerate(ids):
+        if not (i + 1) % 10:
+            print(f"{table}: executing request {i + 1} of {len(ids)}")
+
+        url = f'{prefix}{idx}{suffix}'
+        response = validate_resp(get_request(access_token, url))
+        if not response:
+            print("API Limit Reached, exiting batch get request")
+            break
+
+        data[idx] = response
+    return data
