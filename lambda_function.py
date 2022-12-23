@@ -5,9 +5,9 @@ import utils.strava_api as strava_api
 
 def lambda_handler(event, context):
 
-    activities = strava_api.activities_driver()
-    new_activity_ids = s3ops.update_activities(activities)
-    activity_details_urls = strava_api.get_api_requests(new_activity_ids)
-    s3ops.update_tables(activity_details_urls)
+    access_token = strava_api.get_access_token()
+
+    all_activity_ids = s3ops.update_activities(access_token)
+    s3ops.update_tables(all_activity_ids, access_token)
 
     return 1

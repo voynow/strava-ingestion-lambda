@@ -1,12 +1,33 @@
 
 import utils.configs as configs
+import utils.s3ops as s3ops
 
 import requests
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import WebDriverException
-from headless_chrome import create_driver
+# from headless_chrome import create_driver
+
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.chrome.options import Options
+
+
+options = Options()
+options.add_argument('--headless')
+
+
+def create_driver(link=None):
+    """
+    Create chrome driver, get link if available
+    """
+    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=options)
+    if link:
+        driver.get(link)
+
+    return driver
 
 
 def create_driver_helper():
@@ -79,27 +100,23 @@ def get_activities(access_token):
     ).json()
 
 
-def activities_driver():
+def get_access_token():
 
     oauth_url = create_oauth_url()
     resp = requests.post(oauth_url)
 
     if resp.status_code == 200:
-        auth_code = resp.json()['access_token']
-        return get_activities(auth_code)
+        return resp.json()['access_token']
     else:
         raise Exception(f"Oauth request returning invalid status code: {resp.status_code}")
 
 
-def get_request(access_token, url_suffix):
+def get_urls(ids, table):
     """
-    Constructs get request to strava api
     """
-    return requests.get(
-        f'https://www.strava.com/api/v3/{url_suffix}',
-        headers={'Authorization': f'Bearer {access_token}'},
-        params={'per_page': 200, 'page': 1}
-    ).json()
+    prefix = configs.activities_base_url
+    suffix = configs.activities_endpoints[table]
+    return [(i, f'{prefix}{i}{suffix}') for i in ids]
 
 
 def validate_resp(resp):
@@ -114,23 +131,14 @@ def validate_resp(resp):
     return resp
 
 
-def batch_get_request(table, ids, access_token):
+def get_request(access_token, url_suffix):
     """
-    construct list of get urls given table and activty ids
+    Constructs get request to strava api
     """
-    prefix = configs.activities_base_url
-    suffix = configs.activities_endpoints[table]
+    resp = requests.get(
+        f'https://www.strava.com/api/v3/{url_suffix}',
+        headers={'Authorization': f'Bearer {access_token}'},
+        params={'per_page': 200, 'page': 1}
+    ).json()
 
-    data = {}
-    for i, idx in enumerate(ids):
-        if not (i + 1) % 10:
-            print(f"{table}: executing request {i + 1} of {len(ids)}")
-
-        url = f'{prefix}{idx}{suffix}'
-        response = validate_resp(get_request(access_token, url))
-        if not response:
-            print("API Limit Reached, exiting batch get request")
-            break
-
-        data[idx] = response
-    return data
+    return validate_resp(resp)

@@ -3,6 +3,7 @@ import boto3
 import json
 import time
 
+import utils.strava_api as strava_api
 import utils.configs as configs
 
 
@@ -17,27 +18,54 @@ def load_table(bucket, table):
     return json.loads(obj.get()['Body'].read())
 
 
-def append_new_activities(new_activities, existing_activities):
+def append_new_data(new_data, existing_data):
     """ Append new activities to activities table
     """
-    for activity in new_activities[::-1]:
-        key = str(activity['id'])
+    for item in new_data[::-1]:
+        key = str(item['id'])
         
-        if key not in existing_activities:
-            activity['api_call_ts'] = time.strftime(configs.strfrmt)
-            existing_activities[key] = activity
+        if key not in existing_data:
+            item['api_call_ts'] = time.strftime(configs.strfrmt)
+            existing_data[key] = item
 
-    return existing_activities
+    return existing_data
 
 
 
-def update_activities(activities_from_api):
+def update_activities(access_token):
     """ write activities to strava-raw s3 bucket
     """
     filename = "activities.json"
+
+    activities_from_api = strava_api.get_activities(access_token)
     existing_activities = load_table(bucket_name, filename)
-    master_activities = append_new_activities(activities_from_api, existing_activities)
+    master_activities = append_new_data(activities_from_api, existing_activities)
     master_ids = list(master_activities.keys())
 
-    s3.Object(bucket_name, filename).put(Body=json.dumps(master_activities))
+    # s3.Object(bucket_name, filename).put(Body=json.dumps(master_activities))
     return master_ids
+
+
+def update_tables(ids, access_token):
+    """
+    """
+    bucket = "strava-raw"
+
+    for table_name in configs.activities_endpoints:
+
+        filename = f"{table_name}.json"
+        table = load_table(bucket, filename)
+        missing_ids = [i for i in ids if i not in table]
+
+        new_data = []
+        for idx, url in strava_api.get_urls(missing_ids, table_name):
+            response = strava_api.get_request(access_token, url)
+            if table_name == "laps":
+                print(response)
+                print()
+            response['id'] = idx
+            new_data.append(response)
+
+        # master_table = append_new_data(new_data, table)
+        # add new data to existing table
+        # write table to s3
