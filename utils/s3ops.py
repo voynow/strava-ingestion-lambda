@@ -20,16 +20,14 @@ def load_table(bucket, table):
 def append_new_activities(new_activities, existing_activities):
     """ Append new activities to activities table
     """
-    ids = []
     for activity in new_activities[::-1]:
         key = str(activity['id'])
         
         if key not in existing_activities:
             activity['api_call_ts'] = time.strftime(configs.strfrmt)
             existing_activities[key] = activity
-            ids.append(key)
 
-    return existing_activities, ids
+    return existing_activities
 
 
 
@@ -38,7 +36,8 @@ def update_activities(activities_from_api):
     """
     filename = "activities.json"
     existing_activities = load_table(bucket_name, filename)
-    master_activities, ids = append_new_activities(activities_from_api, existing_activities)
-    s3.Object(bucket_name, filename).put(Body=json.dumps(master_activities))
+    master_activities = append_new_activities(activities_from_api, existing_activities)
+    master_ids = list(master_activities.keys())
 
-    return ids
+    s3.Object(bucket_name, filename).put(Body=json.dumps(master_activities))
+    return master_ids
