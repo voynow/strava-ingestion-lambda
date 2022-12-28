@@ -1,12 +1,33 @@
 
 import utils.configs as configs
+import utils.s3ops as s3ops
 
 import requests
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import WebDriverException
-from headless_chrome import create_driver
+# from headless_chrome import create_driver
+
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.chrome.options import Options
+
+
+options = Options()
+options.add_argument('--headless')
+
+
+def create_driver(link=None):
+    """
+    Create chrome driver, get link if available
+    """
+    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=options)
+    if link:
+        driver.get(link)
+
+    return driver
 
 
 def create_driver_helper():
@@ -79,13 +100,45 @@ def get_activities(access_token):
     ).json()
 
 
-def activities_driver():
+def get_access_token():
 
     oauth_url = create_oauth_url()
     resp = requests.post(oauth_url)
 
     if resp.status_code == 200:
-        auth_code = resp.json()['access_token']
-        return get_activities(auth_code)
+        return resp.json()['access_token']
     else:
         raise Exception(f"Oauth request returning invalid status code: {resp.status_code}")
+
+
+def get_urls(ids, table):
+    """
+    """
+    prefix = configs.activities_base_url
+    suffix = configs.activities_endpoints[table]
+    return [(i, f'{prefix}{i}{suffix}') for i in ids]
+
+
+def validate_resp(resp):
+    # extract data from nested list
+    if isinstance(resp, list):
+        if len(resp) == 1:
+            resp = resp[0]
+    # skip error response from API limit
+    if 'message' in resp:
+        if resp['message'] == configs.rate_exceeded_message:
+            return None
+    return resp
+
+
+def get_request(access_token, url_suffix):
+    """
+    Constructs get request to strava api
+    """
+    resp = requests.get(
+        f'https://www.strava.com/api/v3/{url_suffix}',
+        headers={'Authorization': f'Bearer {access_token}'},
+        params={'per_page': 200, 'page': 1}
+    ).json()
+
+    return validate_resp(resp)
