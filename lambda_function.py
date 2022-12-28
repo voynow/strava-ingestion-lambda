@@ -7,7 +7,7 @@ def lambda_handler(event, context):
 
     access_token = strava_api.get_access_token()
 
-    all_activity_ids = s3ops.update_activities(access_token)
-    s3ops.update_tables(all_activity_ids, access_token)
+    s3ops.update_activities(access_token)
+    s3ops.update_tables(access_token)
 
     return 1
