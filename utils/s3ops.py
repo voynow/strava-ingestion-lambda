@@ -46,7 +46,7 @@ def append_new_data(new_data, existing_data):
         item = new_data[key]
         
         if key not in existing_data:
-            print(f"New activity: id={key}, type={item['type']}")
+            print(f"New activity: id={key}}")
             item['api_call_ts'] = time.strftime(configs.strfrmt)
             existing_data[key] = item
             
